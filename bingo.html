@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>Bingo</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        p {
+            font-size: 30px;
+            text-align: center;
+            margin-top: 0px;
+            margin-bottom: 0px;
+        }
+        #current_number {
+            font-size: 300px;
+            text-align: center;
+            margin-top: 0px;
+            margin-bottom: 0px;
+        }
+        table {
+            width: 100%;
+            font-size: 20px;
+        }
+        table, th, td {
+            border: 1px solid gray;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px 0;
+            text-align: center;
+        }
+        .selected {
+            background-color: green;
+            color: white;
+        }
+        #current_number_div {
+            width: 50%;
+            float: left;
+            text-align:center;
+        }
+        #check_table_div {
+            width: 50%;
+            float: right;
+        }
+        #new_game_div {
+            width: 100%;
+            float: left;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            background-color: green; /* Green */
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 30px;
+        }
+    </style>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type='text/javascript'>
+        $(document).ready(function() {
+            // Create the check table
+            var tens = [];
+            for (i = 0; i <= 80; ) {
+                tens.push(i);
+                i = i+10;
+            }
+            var units = [];
+            for (i = 1; i <= 10; i++) {
+                units.push(i);
+            }
+            for (i = 0; i < tens.length; i++) {
+                $('#check_table').append('<tr id="tens' + tens[i] + '"></tr>');
+                for (j = 0; j < units.length; j++) {
+                    var num = tens[i] + units[j];
+                    $('#tens' + tens[i]).append('<td id="num' + num + '">' + num + '</td>');
+                }
+            }
+            // Start the game
+            new_game();
+            // Set up up the buttons for the functions
+            $('#new_game').on('click', new_game);
+            $('#next').on('click', increment)
+            $('#previous').on('click', decrement)
+            // Allow for right and left arrow keys
+            $(document).bind('keydown', function(e) {
+                if (e.which == 39) {
+                    increment();
+                }
+                else if (e.which = 37) {
+                    decrement();
+                }
+            })
+        });
+        // Starts the game. Set the prize level, then number is drawn, then sleeps 5 seconds, then next number is drawn
+        async function new_game() {
+            nums = []; // Global
+            status = []; // Global
+            stop_playing = 0;
+            for (i = 1; i <= 90; i++) {
+                nums.push(i);
+            }
+            nums = shuffle(nums);
+            current_idx = 0; // Global
+            status_idx = 0; // Global
+            var status = [{prize:"Single Line"},{prize:"Two Lines"},{prize:"Full House"}];
+            $('#current_status').html("Playing For: " + status[status_idx].prize);
+            update();
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            increment();
+        }
+        // Chooses the next number, updates the page, sleeps 5 seconds, then calls itself.
+        async function increment() {
+            if (stop_playing==0) {
+                current_idx++;
+                if (89 < current_idx) {current_idx = 89;}
+                update();
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                increment();
+            } else {
+                stop_playing=0;
+            }
+        }
+        async function decrement() {
+            // Stop talking
+            speechSynthesis.cancel();
+            // Sleep 5 seconds to allow previous utterance to end
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            // Find previous number
+            current_idx--;
+            if (current_idx < 0) {current_idx = 0;}
+            // Resume
+            update();
+        }
+        function shuffle(array) {
+            // http://bost.ocks.org/mike/shuffle/
+            var m = array.length, t, i;
+            while (m) {
+                i = Math.floor(Math.random() * m--);
+                t = array[m];
+                array[m] = array[i];
+                array[i] = t;
+            }
+            return array;
+        }
+        // Update the current number HTML element
+        function update() {
+            $('#current_number').html(nums[current_idx]);
+            $('td').removeClass('selected');
+            for (i = 0; i <= current_idx; i++) {
+                $('#num' + nums[i]).addClass('selected');
+            }
+            play(nums[current_idx]);
+        }
+        async function play(bingo_call) { 
+            // Initialize new SpeechSynthesisUtterance object
+            let speech = new SpeechSynthesisUtterance();
+            // Set Speech Language
+            speech.lang = "en";
+            // Initially set the First Voice in the Array.
+            var voices = speechSynthesis.getVoices();
+            speech.voice = voices[33];
+            // Set rate property of the SpeechSynthesisUtterance instance
+            speech.rate = 1;
+            // Set volume property of the SpeechSynthesisUtterance instance
+            speech.volume = 1;
+            // Set pitch property of the SpeechSynthesisUtterance instance
+            speech.pitch = 1;
+            // Set all the bingo calls
+            calls = [{phrase:"On it's Own"},{phrase:"Me & You"},{phrase:"Cup Of Tea"},{phrase:"Knock at the Door"},{phrase:"Man Alive"},{phrase:"Tom Mix"},{phrase:"Lucky Seven"},{phrase:"Garden Gate"},{phrase:"Doctor's Orders"},{phrase:"Dragon's Den"},{phrase:"Legs 11"},{phrase:"One Dozen"},{phrase:"Unlucky for Some"},{phrase:"Valentine's Day"},{phrase:"Rugby Team"},{phrase:"Sweet Sixteen"},{phrase:"Dancing Queen"},{phrase:"Now you can Vote"},{phrase:"Goodbye Teens"},{phrase:"One Score"},{phrase:"Key of the Door"},{phrase:"Two little Ducks"},{phrase:"A Duck and a Flea"},{phrase:"Two Dozen"},{phrase:"Duck and Dive"},{phrase:"Half a Crown"},{phrase:"Gateway to Heaven"},{phrase:"Duck and it's Weight"},{phrase:"You're Doing Fine"},{phrase:"James is Almost There"},{phrase:"Get Up and Run"},{phrase:"Buckle My Shoe"},{phrase:"Come in For Your Tea"},{phrase:"Ask For More"},{phrase:"Jump and Jive"},{phrase:"Three Dozen"},{phrase:"More Than Eleven"},{phrase:"You're Late"},{phrase:"All The Steps"},{phrase:"Life Begins At"},{phrase:"Life's Begun"},{phrase:"Winnie The Pooh"},{phrase:"Four and Three"},{phrase:"All the Fours"},{phrase:"Halfway There"},{phrase:"Up To Tricks"},{phrase:"Four & Seven"},{phrase:"Four Dozen"},{phrase:"Nice and Shine"},{phrase:"Blind 50"},{phrase:"Tweak of the Thumb"},{phrase:"Weeks in a Year"},{phrase:"Stuck in a Tree"},{phrase:"Clean the Floor"},{phrase:"All the Fives"},{phrase:"Five and Six"},{phrase:"Heinz Varieties"},{phrase:"Make them Wait"},{phrase:"Brighton Line"},{phrase:"Five Dozen"},{phrase:"Baker's Bun"},{phrase:"Turn to the Screw"},{phrase:"Tickle Me"},{phrase:"Knock on the Door"},{phrase:"Old Age Pension"},{phrase:"Clickety Click"},{phrase:"Made In Heaven"},{phrase:"Saving Grace"},{phrase:"Six and Nine"},{phrase:"Three Score & 10"},{phrase:"Bang on thee Drum"},{phrase:"Danny La Rue"},{phrase:"Queen B"},{phrase:"Candy Store"},{phrase:"On the Skive"},{phrase:"Trombones"},{phrase:"Seven Plus Seven"},{phrase:"Heaven's Gate"},{phrase:"Seventy Plus Nine"},{phrase:"Four Score"},{phrase:"Stop and Run"},{phrase:"Straight on Through"},{phrase:"Time for Tea"},{phrase:"Seven Dozen"},{phrase:"Dots Living the Life"},{phrase:"Between the Sticks"},{phrase:"Fat Lady with a Cane"},{phrase:"Two Fat Ladies"},{phrase:"All But One"},{phrase:"End of the Line"}];
+            // Start Speaking
+            speech.text = calls[bingo_call-1].phrase;
+            // Set the rhyme line
+            $('#current_ryhme').html(calls[bingo_call-1].phrase);
+            speechSynthesis.speak(speech);
+            // Sleep 2 seconds between messagess
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            speech.text = bingo_call;
+            speechSynthesis.speak(speech);
+        }
+        // Set the stop flag so increment() doesnt trigger. Set status to next prize
+        function bingoCalled() {
+            stop_playing = 1;
+            speechSynthesis.cancel();
+            // https://www.soundsnap.com/sports_voice_clips_male_bingo_01
+            var audio = new Audio('https://www.soundsnap.com/streamers/play2.php?t=l&p=files%2Faudio%2F87%2F53394-SPORTS_VOICE_CLIPS_MALE_BINGO_01.mp3');
+            audio.play();
+            window.alert("We have a winner!");
+            status_idx++;
+            var status = [{prize:"Single Line"},{prize:"Two Lines"},{prize:"Full House"}];
+            // Prevent out of bounds error
+            if (status_idx > 2) {status_idx = 2}
+            $('#current_status').html("Playing For: " + status[status_idx].prize);
+        }
+    </script>
+</head>
+<body>
+    <div id='current_number_div'>
+        <p id='current_number'></p>
+        <p id='current_ryhme'></p><br>
+        <button id='previous'>&#12298 Previous</button>
+        <button id='next'>Next &#12299</button>
+        <p id='current_status'>Playing For:</p>
+    </div>
+    <div id='check_table_div'>
+        <table id='check_table'></table>
+    </div>
+    <div id='new_game_div'>
+       <button id='new_game'>New Game</button>
+       <button id='bingo_called' onclick="bingoCalled()">BINGO!</button>
+    </div>
+</body>
+</html>
