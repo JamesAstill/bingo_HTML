@@ -85,13 +85,16 @@
             $('#new_game').on('click', new_game);
             $('#next').on('click', increment)
             $('#previous').on('click', decrement)
-            // Allow for right and left arrow keys
+            // Allow for right,left arrow keys and space
             $(document).bind('keydown', function(e) {
                 if (e.which == 39) {
                     increment();
                 }
-                else if (e.which = 37) {
+                else if (e.which == 37) {
                     decrement();
+                }
+                else if (e.which == 32) {
+                    bingoCalled();
                 }
             })
         });
